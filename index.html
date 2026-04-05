@@ -343,7 +343,13 @@
       const data = await r.json();
       totalPts   = data.totalPoints || 0;
       document.getElementById('userPoints').textContent = totalPts.toLocaleString();
-      setStatus(`Hashes done today: ${data.hashCount || 0} · Cores: ${numCores}`);
+      const lim = data.limit || 3;
+      const rem = data.remaining || 0;
+      setStatus(`Hashes remaining today: ${rem}/${lim}${data.upgraded ? ' ⚡' : ''} · Cores: ${numCores}`);
+      if (rem <= 0) {
+        document.getElementById('hashBtn').disabled = true;
+        setStatus(`Daily limit reached (${lim}/${lim}). Come back tomorrow!`);
+      }
     } catch(e) {
       setStatus('Could not connect to server.', true);
     }
@@ -466,9 +472,14 @@
       document.getElementById('earnedDisplay').textContent = '+' + data.earned;
       document.getElementById('ptsNote').textContent = 'Points awarded!';
       document.getElementById('userPoints').textContent = totalPts.toLocaleString();
-      setStatus(`Done! Hashes today: ${data.hashCount || 0}`);
-      document.getElementById('hashBtn').disabled = false;
-      document.getElementById('hashBtn').textContent = '⛏ Hash Again';
+      setStatus(`Done! Hashes remaining: ${data.remaining}/${data.limit || 3}`);
+      if (data.remaining <= 0) {
+        document.getElementById('hashBtn').disabled = true;
+        document.getElementById('hashBtn').textContent = '✅ Done for today';
+      } else {
+        document.getElementById('hashBtn').disabled = false;
+        document.getElementById('hashBtn').textContent = '⛏ Hash Again';
+      }
       busy = false;
     } catch(err) {
       setStatus('Submit error: ' + err.message, true);
