@@ -334,12 +334,7 @@
       const data = await r.json();
       totalPts   = data.totalPoints || 0;
       document.getElementById('userPoints').textContent = totalPts.toLocaleString();
-      if (data.remaining === 0) {
-        document.getElementById('hashBtn').disabled = true;
-        setStatus('Daily limit reached (3/3). Come back tomorrow!');
-      } else {
-        setStatus(`Hashes remaining today: ${data.remaining}/3`);
-      }
+      setStatus(`Hashes done today: ${data.hashCount || 0}`);
     } catch(e) {
       setStatus('Could not connect to server.', true);
     }
@@ -418,14 +413,9 @@
       document.getElementById('ptsNote').textContent = 'Points awarded!';
       document.getElementById('userPoints').textContent = totalPts.toLocaleString();
 
-      if (data.remaining === 0) {
-        setStatus('Daily limit reached. Come back tomorrow!');
-        document.getElementById('hashBtn').textContent = '✅ Done for today';
-      } else {
-        setStatus(`Hashes remaining today: ${data.remaining}/3`);
-        document.getElementById('hashBtn').disabled = false;
-        document.getElementById('hashBtn').textContent = '⛏ Hash Again';
-      }
+      setStatus(`Hashes done today: ${data.hashCount || 0}`);
+      document.getElementById('hashBtn').disabled = false;
+      document.getElementById('hashBtn').textContent = '⛏ Hash Again';
       busy = false;
     } catch(err) {
       setStatus('Submit error: ' + err.message, true);
