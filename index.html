@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hash Points — Cucumverse</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@400;600;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      color: #e8ffe8;
+      overflow-x: hidden;
+      position: relative;
+      background: #010a04;
+    }
+
+    /* ── Cosmos galaxy background ── */
+    .galaxy {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(0,80,30,0.55) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 70%, rgba(0,50,20,0.45) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(10,40,15,0.6) 0%, transparent 70%),
+        radial-gradient(ellipse at 10% 80%, rgba(0,100,40,0.3) 0%, transparent 40%),
+        radial-gradient(ellipse at 90% 10%, rgba(20,80,40,0.35) 0%, transparent 45%),
+        #010a04;
+    }
+
+    /* Stars */
+    .stars {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 15%, rgba(150,255,150,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 25% 40%, rgba(200,255,200,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 40% 10%, rgba(100,255,100,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 60%, rgba(180,255,180,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 25%, rgba(150,255,150,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 50%, rgba(200,255,200,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 15% 70%, rgba(100,255,100,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 85%, rgba(180,255,180,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 80%, rgba(150,255,150,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 75% 90%, rgba(200,255,200,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 45% 35%, rgba(100,255,150,0.7) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 90% 65%, rgba(150,255,100,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5%  50%, rgba(200,255,180,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 95% 30%, rgba(180,255,200,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 95%, rgba(150,255,150,0.4) 0%, transparent 100%);
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle {
+      0%   { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    /* ── Layout ── */
+    .page {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    /* ── Logo ── */
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+    .logo-wrap img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 18px rgba(76,222,126,0.7));
+      animation: float 3.5s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    .logo-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      color: #4cde7e;
+      letter-spacing: 0.15em;
+      margin-top: 0.4rem;
+      text-shadow: 0 0 12px rgba(76,222,126,0.6);
+    }
+
+    /* ── Title ── */
+    .title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 0.2rem;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 0.78rem;
+      color: #6beba0;
+      text-align: center;
+      margin-bottom: 1.8rem;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(6,20,10,0.75);
+      border: 1px solid rgba(76,222,126,0.25);
+      backdrop-filter: blur(12px);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Progress ── */
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: #6beba0;
+      margin-bottom: 0.5rem;
+    }
+    .bar-bg {
+      background: rgba(76,222,126,0.1);
+      border: 1px solid rgba(76,222,126,0.2);
+      height: 14px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1a7a3a, #4cde7e, #6beba0);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 8px rgba(76,222,126,0.5);
+    }
+    .pct-display {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #4cde7e;
+      text-align: center;
+      text-shadow: 0 0 16px rgba(76,222,126,0.6);
+      margin-bottom: 0.3rem;
+    }
+
+    /* ── Decimal hashing display ── */
+    .hash-scroll {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      color: rgba(76,222,126,0.5);
+      text-align: center;
+      word-break: break-all;
+      min-height: 1.2rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* ── User info ── */
+    .user-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0.8rem;
+      background: rgba(76,222,126,0.05);
+      border: 1px solid rgba(76,222,126,0.15);
+      margin-bottom: 0.6rem;
+      font-size: 0.78rem;
+    }
+    .user-row .label { color: #6beba0; font-family: 'Space Mono', monospace; font-size: 0.65rem; }
+    .user-row .value { color: #fff; font-weight: 700; font-family: 'Space Mono', monospace; }
+
+    /* ── Points box ── */
+    .points-box {
+      border: 1px solid rgba(76,222,126,0.35);
+      background: rgba(76,222,126,0.06);
+      padding: 1rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .points-box .pts-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: #6beba0;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.3rem;
+    }
+    .points-box .pts-val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #4cde7e;
+      text-shadow: 0 0 20px rgba(76,222,126,0.7);
+      line-height: 1;
+    }
+    .points-box .pts-note {
+      font-size: 0.68rem;
+      color: rgba(107,235,160,0.6);
+      margin-top: 0.3rem;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%;
+      max-width: 380px;
+      padding: 1rem;
+      background: #4cde7e;
+      color: #010a04;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(76,222,126,0.3);
+    }
+    .btn:hover:not(:disabled) {
+      background: #6beba0;
+      box-shadow: 0 0 30px rgba(76,222,126,0.5);
+    }
+    .btn:disabled {
+      background: rgba(76,222,126,0.15);
+      color: rgba(76,222,126,0.4);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .status-msg {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      color: rgba(107,235,160,0.7);
+      text-align: center;
+      margin-top: 0.8rem;
+      min-height: 1rem;
+    }
+    .err { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+
+<div class="galaxy"></div>
+<div class="stars"></div>
+
+<div class="page">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <img src="https://raw.githubusercontent.com/cucumverse/cucumverse.github.io/main/assets/cucumverselogo.png"
+         onerror="this.style.display='none'"
+         alt="Cucumverse"/>
+    <div class="logo-name">CUCUMVERSE</div>
+  </div>
+
+  <div class="title">🔑 Hash Points</div>
+  <div class="subtitle">Elevate your points just by hashing</div>
+
+  <!-- Main card -->
+  <div class="card">
+
+    <!-- Progress bar -->
+    <div class="progress-label">
+      <span>KEY SEARCH PROGRESS</span>
+      <span id="pctLabel">0%</span>
+    </div>
+    <div class="bar-bg">
+      <div class="bar-fill" id="barFill"></div>
+    </div>
+    <div class="pct-display" id="pctDisplay">0%</div>
+
+    <!-- Decimal hashing scroll -->
+    <div class="hash-scroll" id="hashScroll">— waiting to start —</div>
+
+    <!-- User info -->
+    <div class="user-row">
+      <span class="label">TELEGRAM ID</span>
+      <span class="value" id="userChatId">—</span>
+    </div>
+    <div class="user-row">
+      <span class="label">TOTAL POINTS</span>
+      <span class="value" id="userPoints">—</span>
+    </div>
+
+  </div>
+
+  <!-- Points earned box -->
+  <div class="card points-box">
+    <div class="pts-label">Points This Hash</div>
+    <div class="pts-val" id="earnedDisplay">—</div>
+    <div class="pts-note" id="ptsNote">Complete hashing to earn points</div>
+  </div>
+
+  <!-- Button -->
+  <button class="btn" id="hashBtn" onclick="startHash()">⛏ Start Hashing</button>
+
+  <div class="status-msg" id="statusMsg">Press start to begin</div>
+
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  const tg     = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  const BOT_API = 'https://cucumverse-airdrop-bot-production.up.railway.app';
+  const chatId  = tg.initDataUnsafe?.user?.id || null;
+  let   worker  = null;
+  let   chunk   = null;
+  let   busy    = false;
+  let   totalPts = 0;
+
+  document.getElementById('userChatId').textContent = chatId || 'Unknown';
+
+  async function init() {
+    if (!chatId) { setStatus('Could not identify Telegram account.', true); return; }
+    try {
+      const r    = await fetch(`${BOT_API}/hash/state?chatId=${chatId}`);
+      const data = await r.json();
+      totalPts   = data.totalPoints || 0;
+      document.getElementById('userPoints').textContent = totalPts.toLocaleString();
+      if (data.remaining === 0) {
+        document.getElementById('hashBtn').disabled = true;
+        setStatus('Daily limit reached (3/3). Come back tomorrow!');
+      } else {
+        setStatus(`Hashes remaining today: ${data.remaining}/3`);
+      }
+    } catch(e) {
+      setStatus('Could not connect to server.', true);
+    }
+  }
+
+  async function startHash() {
+    if (busy || !chatId) return;
+    busy = true;
+    document.getElementById('hashBtn').disabled = true;
+    document.getElementById('earnedDisplay').textContent = '—';
+    document.getElementById('ptsNote').textContent = 'Hashing in progress...';
+    setStatus('Assigning key range from server...');
+
+    try {
+      const r    = await fetch(`${BOT_API}/hash/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId })
+      });
+      const data = await r.json();
+      if (!data.ok) { setStatus(data.error || 'Failed to assign chunk.', true); busy = false; document.getElementById('hashBtn').disabled = false; return; }
+
+      chunk = data;
+      setStatus('Your device is hashing keys...');
+
+      worker = new Worker('worker.js');
+      worker.postMessage({ startDecimal: data.start, chunkSize: data.chunkSize, target: data.target });
+
+      worker.onmessage = async (e) => {
+        const msg = e.data;
+        if (msg.type === 'progress') {
+          updateProgress(msg.pct, msg.currentKey);
+        } else if (msg.type === 'done') {
+          updateProgress(100, msg.lastKey);
+          worker.terminate();
+          await submitResult(msg);
+        }
+      };
+    } catch(err) {
+      setStatus('Error: ' + err.message, true);
+      busy = false;
+      document.getElementById('hashBtn').disabled = false;
+    }
+  }
+
+  function updateProgress(pct, currentKey) {
+    document.getElementById('barFill').style.width = pct + '%';
+    document.getElementById('pctLabel').textContent = pct + '%';
+    document.getElementById('pctDisplay').textContent = pct + '%';
+    if (currentKey) {
+      document.getElementById('hashScroll').textContent = currentKey;
+    }
+  }
+
+  async function submitResult(result) {
+    setStatus('Submitting result...');
+    try {
+      const r    = await fetch(`${BOT_API}/hash/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatId,
+          start:     chunk.start,
+          found:     result.found,
+          foundKey:  result.key  || null,
+          foundH160: result.h160 || null,
+          initData:  tg.initData
+        })
+      });
+      const data = await r.json();
+      if (!data.ok) { setStatus(data.error || 'Submission failed.', true); busy = false; return; }
+
+      // Show earned points
+      totalPts = data.totalPoints || (totalPts + data.earned);
+      document.getElementById('earnedDisplay').textContent = '+' + data.earned;
+      document.getElementById('ptsNote').textContent = 'Points awarded!';
+      document.getElementById('userPoints').textContent = totalPts.toLocaleString();
+
+      if (data.remaining === 0) {
+        setStatus('Daily limit reached. Come back tomorrow!');
+        document.getElementById('hashBtn').textContent = '✅ Done for today';
+      } else {
+        setStatus(`Hashes remaining today: ${data.remaining}/3`);
+        document.getElementById('hashBtn').disabled = false;
+        document.getElementById('hashBtn').textContent = '⛏ Hash Again';
+      }
+      busy = false;
+    } catch(err) {
+      setStatus('Submit error: ' + err.message, true);
+      busy = false;
+    }
+  }
+
+  function setStatus(msg, isErr) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = msg;
+    el.className = 'status-msg' + (isErr ? ' err' : '');
+  }
+
+  init();
+</script>
+</body>
+</html>
