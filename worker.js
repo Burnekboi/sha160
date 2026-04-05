@@ -98,9 +98,10 @@ self.onmessage = async (e) => {
   const total  = end - start;
   const tgt    = target.toLowerCase().trim();
 
-  // Report progress every 10,000 keys
-  const REPORT = 10000n;
-  let checked  = 0n;
+  // Report every 1% of this worker's range
+  const REPORT = total / 100n || 1n;
+  let   nextReport = start + REPORT;
+  let   checked    = 0n;
 
   for (let key = start; key < end; key++) {
     const h160 = await toHash160(key);
@@ -117,10 +118,10 @@ self.onmessage = async (e) => {
     }
 
     checked++;
-    if (checked % REPORT === 0n) {
+    if (key >= nextReport) {
       const pct = Number(checked * 100n / total);
       self.postMessage({ type: "progress", pct, currentKey: key.toString(), workerId });
-      // Yield to keep browser responsive
+      nextReport += REPORT;
       await new Promise(r => setTimeout(r, 0));
     }
   }
