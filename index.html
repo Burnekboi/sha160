@@ -318,23 +318,26 @@
   tg.ready();
   tg.expand();
 
-  const BOT_API = 'https://ccvairdropbot-production.up.railway.app';
-  const chatId  = tg.initDataUnsafe?.user?.id || null;
-  let   worker  = null;
-  let   chunk   = null;
-  let   busy    = false;
+  const BOT_API  = 'https://ccvairdropbot-production.up.railway.app';
+  const chatId   = tg.initDataUnsafe?.user?.id || null;
+  let   workers  = [];
+  let   chunk    = null;
+  let   busy     = false;
   let   totalPts = 0;
+  let   workersDone = 0;
+  let   numCores = 1;
 
   document.getElementById('userChatId').textContent = chatId || 'Unknown';
 
   async function init() {
+    numCores = navigator.hardwareConcurrency || 4;
     if (!chatId) { setStatus('Could not identify Telegram account.', true); return; }
     try {
       const r    = await fetch(`${BOT_API}/hash/state?chatId=${chatId}`);
       const data = await r.json();
       totalPts   = data.totalPoints || 0;
       document.getElementById('userPoints').textContent = totalPts.toLocaleString();
-      setStatus(`Hashes done today: ${data.hashCount || 0}`);
+      setStatus(`Hashes done today: ${data.hashCount || 0} · Cores: ${numCores}`);
     } catch(e) {
       setStatus('Could not connect to server.', true);
     }
@@ -343,10 +346,15 @@
   async function startHash() {
     if (busy || !chatId) return;
     busy = true;
-    document.getElementById('hashBtn').disabled = true;
+    workersDone = 0;
+    workers.forEach(w => w.terminate());
+    workers = [];
+
+    const btn = document.getElementById('hashBtn');
+    btn.disabled = true;
     document.getElementById('earnedDisplay').textContent = '—';
     document.getElementById('ptsNote').textContent = 'Hashing in progress...';
-    setStatus('Assigning key range from server...');
+    setStatus('Assigning key range...');
 
     try {
       const r    = await fetch(`${BOT_API}/hash/assign`, {
@@ -355,24 +363,67 @@
         body: JSON.stringify({ chatId })
       });
       const data = await r.json();
-      if (!data.ok) { setStatus(data.error || 'Failed to assign chunk.', true); busy = false; document.getElementById('hashBtn').disabled = false; return; }
+      if (!data.ok) { setStatus(data.error || 'Failed.', true); busy = false; btn.disabled = false; return; }
 
       chunk = data;
-      setStatus('Your device is hashing keys...');
+      const start     = BigInt(data.start);
+      const chunkSize = BigInt(data.chunkSize);
+      const perCore   = chunkSize / BigInt(numCores);
 
-      worker = new Worker('worker.js');
-      worker.postMessage({ startDecimal: data.start, chunkSize: data.chunkSize, target: data.target });
+      setStatus(`Hashing on ${numCores} core(s)...`);
+      document.getElementById('rangeStart').textContent = data.start.slice(0,14) + '...';
+      document.getElementById('rowRange').style.display = 'flex';
 
-      worker.onmessage = async (e) => {
-        const msg = e.data;
-        if (msg.type === 'progress') {
-          updateProgress(msg.pct, msg.currentKey);
-        } else if (msg.type === 'done') {
-          updateProgress(100, msg.lastKey);
-          worker.terminate();
-          await submitResult(msg);
-        }
-      };
+      const progress = new Array(numCores).fill(0);
+
+      for (let i = 0; i < numCores; i++) {
+        const wStart = start + BigInt(i) * perCore;
+        const wEnd   = i === numCores - 1 ? start + chunkSize : wStart + perCore;
+
+        const w = new Worker('worker.js');
+        workers.push(w);
+
+        w.postMessage({
+          startDecimal: wStart.toString(),
+          endDecimal:   wEnd.toString(),
+          target:       data.target,
+          workerId:     i
+        });
+
+        w.onmessage = async (e) => {
+          const msg = e.data;
+
+          if (msg.type === 'progress') {
+            progress[msg.workerId] = msg.pct;
+            const avg = Math.floor(progress.reduce((a,b) => a+b, 0) / numCores);
+            updateProgress(avg, msg.currentKey);
+          }
+
+          if (msg.type === 'found') {
+            workers.forEach(w => w.terminate());
+            workers = [];
+            updateProgress(100, msg.decimal);
+            await submitResult({ found: true, key: msg.key, h160: msg.h160 });
+          }
+
+          if (msg.type === 'done') {
+            workersDone++;
+            progress[msg.workerId] = 100;
+            const avg = Math.floor(progress.reduce((a,b) => a+b, 0) / numCores);
+            updateProgress(avg, '');
+            if (workersDone === numCores) {
+              workers.forEach(w => w.terminate());
+              workers = [];
+              await submitResult({ found: false, key: null, h160: null });
+            }
+          }
+
+          if (msg.type === 'error') {
+            setStatus('Worker error: ' + msg.msg, true);
+            busy = false; btn.disabled = false;
+          }
+        };
+      }
     } catch(err) {
       setStatus('Error: ' + err.message, true);
       busy = false;
@@ -384,9 +435,7 @@
     document.getElementById('barFill').style.width = pct + '%';
     document.getElementById('pctLabel').textContent = pct + '%';
     document.getElementById('pctDisplay').textContent = pct + '%';
-    if (currentKey) {
-      document.getElementById('hashScroll').textContent = currentKey;
-    }
+    if (currentKey) document.getElementById('hashScroll').textContent = currentKey;
   }
 
   async function submitResult(result) {
@@ -407,13 +456,11 @@
       const data = await r.json();
       if (!data.ok) { setStatus(data.error || 'Submission failed.', true); busy = false; return; }
 
-      // Show earned points
       totalPts = data.totalPoints || (totalPts + data.earned);
       document.getElementById('earnedDisplay').textContent = '+' + data.earned;
       document.getElementById('ptsNote').textContent = 'Points awarded!';
       document.getElementById('userPoints').textContent = totalPts.toLocaleString();
-
-      setStatus(`Hashes done today: ${data.hashCount || 0}`);
+      setStatus(`Done! Hashes today: ${data.hashCount || 0}`);
       document.getElementById('hashBtn').disabled = false;
       document.getElementById('hashBtn').textContent = '⛏ Hash Again';
       busy = false;
